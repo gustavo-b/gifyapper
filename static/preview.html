@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>GifYapper — Position Speech Bubble</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: #1a1a2e;
+  color: #e0e0e0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+h1 { font-size: 1.4em; margin-bottom: 16px; color: #fff; }
+.container {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.canvas-wrap {
+  position: relative;
+  border: 2px solid #333;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: default;
+}
+canvas { display: block; }
+.controls {
+  background: #16213e;
+  border-radius: 8px;
+  padding: 20px;
+  min-width: 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.controls label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.9em;
+}
+.controls select, .controls input[type=number], .controls input[type=range] {
+  background: #0f3460;
+  color: #e0e0e0;
+  border: 1px solid #444;
+  border-radius: 4px;
+  padding: 6px 8px;
+  font-size: 0.9em;
+}
+.controls input[type=range] { padding: 0; accent-color: #e94560; }
+.controls input[type=number] { width: 80px; }
+.range-row { display: flex; align-items: center; gap: 8px; }
+.range-row input[type=range] { flex: 1; }
+.range-val { font-size: 0.85em; color: #aaa; min-width: 36px; text-align: right; }
+button#generate {
+  background: #e94560; color: #fff; border: none; border-radius: 6px;
+  padding: 12px 20px; font-size: 1em; cursor: pointer; font-weight: 600; margin-top: 4px;
+}
+button#generate:hover { background: #c73c54; }
+button#generate:disabled { background: #666; cursor: default; }
+.status { margin-top: 12px; font-size: 0.9em; color: #aaa; text-align: center; }
+.hint { font-size: 0.8em; color: #888; margin-top: 8px; }
+hr { border: none; border-top: 1px solid #333; margin: 4px 0; }
+.section-label { font-size: 0.8em; color: #e94560; text-transform: uppercase; letter-spacing: 0.5px; }
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+<h1>GifYapper</h1>
+<div class="container">
+  <div class="canvas-wrap">
+    <canvas id="canvas"></canvas>
+  </div>
+  <div class="controls">
+    <span class="section-label">Bubble</span>
+    <label>
+      Shape
+      <select id="shape">
+        <option value="circle">Circle</option>
+        <option value="box">Box</option>
+      </select>
+    </label>
+    <label id="cornerRadiusGroup" class="hidden">
+      Corner Radius
+      <div class="range-row">
+        <input type="range" id="cornerRadius" min="0" max="60" value="20" step="1">
+        <span class="range-val" id="cornerRadiusVal">20</span>
+      </div>
+    </label>
+    <label>
+      Bubble Width
+      <input type="number" id="bubbleWidth" value="200" min="60" max="800" step="10">
+    </label>
+    <label>
+      Bubble Height
+      <input type="number" id="bubbleHeight" value="80" min="20" max="400" step="10">
+    </label>
+    <hr>
+    <span class="section-label">Tail</span>
+    <label>
+      Direction
+      <div style="display:flex;gap:6px;align-items:center">
+        <select id="tail" style="flex:1">
+          <option value="bottom-right">Bottom Right</option>
+          <option value="bottom-left">Bottom Left</option>
+          <option value="bottom-center">Bottom Center</option>
+          <option value="top-right">Top Right</option>
+          <option value="top-left">Top Left</option>
+          <option value="top-center">Top Center</option>
+        </select>
+        <button type="button" id="flipTail" style="background:#0f3460;color:#e0e0e0;border:1px solid #444;border-radius:4px;padding:6px 10px;cursor:pointer;font-size:0.85em">Flip</button>
+      </div>
+    </label>
+    <label>
+      Position
+      <div class="range-row">
+        <input type="range" id="tailPos" min="0" max="100" value="65" step="1">
+        <span class="range-val" id="tailPosVal">65%</span>
+      </div>
+    </label>
+    <label>
+      Size
+      <div class="range-row">
+        <input type="range" id="tailSize" min="5" max="80" value="30" step="1">
+        <span class="range-val" id="tailSizeVal">30</span>
+      </div>
+    </label>
+    <label>
+      Angle (width)
+      <div class="range-row">
+        <input type="range" id="tailAngle" min="5" max="90" value="40" step="1">
+        <span class="range-val" id="tailAngleVal">40°</span>
+      </div>
+    </label>
+    <hr>
+    <span class="section-label">Canvas</span>
+    <label>
+      Pad Top (px)
+      <input type="number" id="padTop" value="0" min="0" max="400" step="10">
+    </label>
+    <button id="generate">Generate GIF</button>
+    <div class="hint">Drag the bubble to reposition.</div>
+    <div class="status" id="status"></div>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let data = null;
+let frameImg = null;
+let bgColor = '#323339';
+
+let bx = 10, by = 10, bw = 200, bh = 80;
+let dragging = false, dragOx = 0, dragOy = 0;
+
+async function init() {
+  const resp = await fetch('/api/data');
+  data = await resp.json();
+  bgColor = data.bg_color || '#323339';
+  frameImg = new Image();
+  frameImg.onload = () => {
+    bw = data.bubble_width;
+    bh = data.bubble_height;
+    document.getElementById('bubbleWidth').value = bw;
+    bx = Math.max(0, Math.floor((data.gif_width - bw) / 2));
+    by = 10;
+    redraw();
+  };
+  frameImg.src = data.frame;
+  // bgColor is used for the bubble fill, not the page
+}
+
+function val(id) { return parseInt(document.getElementById(id).value) || 0; }
+function getPadTop() { return val('padTop'); }
+function getTail() { return document.getElementById('tail').value; }
+function getShape() { return document.getElementById('shape').value; }
+function getTailPos() { return val('tailPos') / 100; }
+function getTailSize() { return val('tailSize'); }
+function getTailAngle() { return val('tailAngle'); }
+function getCornerRadius() { return val('cornerRadius'); }
+
+function updateShapeControls() {
+  const isBox = getShape() === 'box';
+  document.getElementById('cornerRadiusGroup').classList.toggle('hidden', !isBox);
+}
+
+function redraw() {
+  const padTop = getPadTop();
+  const cw = data.gif_width;
+  const ch = data.gif_height + padTop;
+  canvas.width = cw;
+  canvas.height = ch;
+
+  ctx.fillStyle = '#1a1a2e';
+  ctx.fillRect(0, 0, cw, ch);
+  ctx.drawImage(frameImg, 0, padTop);
+  drawBubble(ctx, bx, by, bw, bh, getTail(), getShape(), getCornerRadius(), getTailPos(), getTailSize(), getTailAngle());
+}
+
+function ellipseBottomY(ecx, ecy, erx, ery, x) {
+  const dx = x - ecx;
+  if (Math.abs(dx) >= erx) return ecy;
+  return ecy + ery * Math.sqrt(1 - (dx / erx) ** 2);
+}
+
+function drawBubble(ctx, x, y, w, h, tail, shape, cornerRadius, tailPos, tailSize, tailAngle) {
+  const tailBase = 2 * tailSize * (tailAngle / 90);
+  const halfBase = Math.max(1, tailBase / 2);
+
+  ctx.fillStyle = bgColor;
+
+  // Body
+  if (shape === 'circle') {
+    ctx.beginPath();
+    ctx.ellipse(x + w/2, y + h/2, w/2, h/2, 0, 0, Math.PI * 2);
+    ctx.fill();
+  } else {
+    const r = Math.min(cornerRadius, w/2, h/2);
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // Tail attachment
+  let cx = x + w * tailPos;
+  cx = Math.max(x + halfBase, Math.min(x + w - halfBase, cx));
+
+  const isBottom = tail.startsWith('bottom');
+  const overlap = 2;
+  let leftY, rightY, edgeY;
+
+  if (shape === 'circle') {
+    const ecx = x + w/2, ecy = y + h/2, erx = w/2, ery = h/2;
+    if (isBottom) {
+      edgeY = ellipseBottomY(ecx, ecy, erx, ery, cx);
+      leftY = ellipseBottomY(ecx, ecy, erx, ery, cx - halfBase) - overlap;
+      rightY = ellipseBottomY(ecx, ecy, erx, ery, cx + halfBase) - overlap;
+    } else {
+      edgeY = 2 * ecy - ellipseBottomY(ecx, ecy, erx, ery, cx);
+      leftY = 2 * ecy - ellipseBottomY(ecx, ecy, erx, ery, cx - halfBase) + overlap;
+      rightY = 2 * ecy - ellipseBottomY(ecx, ecy, erx, ery, cx + halfBase) + overlap;
+    }
+  } else {
+    edgeY = isBottom ? y + h : y;
+    leftY = isBottom ? edgeY - overlap : edgeY + overlap;
+    rightY = leftY;
+  }
+
+  // Tail tip
+  let tipX, tipY;
+  if (tail === 'bottom-right')  { tipX = cx + tailSize; tipY = edgeY + tailSize; }
+  else if (tail === 'bottom-left')   { tipX = cx - tailSize; tipY = edgeY + tailSize; }
+  else if (tail === 'bottom-center') { tipX = cx;            tipY = edgeY + tailSize; }
+  else if (tail === 'top-right')     { tipX = cx + tailSize; tipY = edgeY - tailSize; }
+  else if (tail === 'top-left')      { tipX = cx - tailSize; tipY = edgeY - tailSize; }
+  else if (tail === 'top-center')    { tipX = cx;            tipY = edgeY - tailSize; }
+
+  ctx.beginPath();
+  ctx.moveTo(cx - halfBase, leftY);
+  ctx.lineTo(tipX, tipY);
+  ctx.lineTo(cx + halfBase, rightY);
+  ctx.closePath();
+  ctx.fill();
+}
+
+// Dragging
+canvas.addEventListener('mousedown', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+  if (mx >= bx && mx <= bx + bw && my >= by && my <= by + bh) {
+    dragging = true; dragOx = mx - bx; dragOy = my - by;
+    canvas.style.cursor = 'grabbing';
+  }
+});
+canvas.addEventListener('mousemove', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+  if (dragging) { bx = mx - dragOx; by = my - dragOy; redraw(); }
+  else if (mx >= bx && mx <= bx + bw && my >= by && my <= by + bh) canvas.style.cursor = 'grab';
+  else canvas.style.cursor = 'default';
+});
+canvas.addEventListener('mouseup', () => { dragging = false; canvas.style.cursor = 'default'; });
+canvas.addEventListener('mouseleave', () => { dragging = false; canvas.style.cursor = 'default'; });
+
+// Controls
+document.getElementById('padTop').addEventListener('input', redraw);
+document.getElementById('tail').addEventListener('change', redraw);
+document.getElementById('shape').addEventListener('change', () => { updateShapeControls(); redraw(); });
+document.getElementById('bubbleWidth').addEventListener('input', () => {
+  bw = parseInt(document.getElementById('bubbleWidth').value) || 200;
+  redraw();
+});
+document.getElementById('bubbleHeight').addEventListener('input', () => {
+  bh = parseInt(document.getElementById('bubbleHeight').value) || 80;
+  redraw();
+});
+document.getElementById('flipTail').addEventListener('click', () => {
+  const sel = document.getElementById('tail');
+  const flips = {
+    'bottom-right': 'bottom-left', 'bottom-left': 'bottom-right',
+    'top-right': 'top-left', 'top-left': 'top-right',
+    'bottom-center': 'top-center', 'top-center': 'bottom-center',
+  };
+  sel.value = flips[sel.value] || sel.value;
+  redraw();
+});
+
+function rangeCtrl(id, valId, fmt) {
+  document.getElementById(id).addEventListener('input', () => {
+    document.getElementById(valId).textContent = fmt(document.getElementById(id).value);
+    redraw();
+  });
+}
+rangeCtrl('tailPos', 'tailPosVal', v => v + '%');
+rangeCtrl('tailSize', 'tailSizeVal', v => v);
+rangeCtrl('tailAngle', 'tailAngleVal', v => v + '\u00B0');
+rangeCtrl('cornerRadius', 'cornerRadiusVal', v => v);
+
+// Generate
+document.getElementById('generate').addEventListener('click', async () => {
+  const btn = document.getElementById('generate');
+  const status = document.getElementById('status');
+  btn.disabled = true;
+  status.textContent = 'Generating...';
+
+  const payload = {
+    x: Math.round(bx), y: Math.round(by), width: bw, height: bh,
+    tail_direction: getTail(), pad_top: getPadTop(),
+    shape: getShape(), corner_radius: getCornerRadius(),
+    tail_position: getTailPos(), tail_size: getTailSize(), tail_angle: getTailAngle(),
+  };
+
+  try {
+    await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    status.textContent = 'Done! Check your terminal for the output file.';
+  } catch (err) { status.textContent = 'Error: ' + err.message; btn.disabled = false; }
+});
+
+init();
+</script>
+</body>
+</html>
