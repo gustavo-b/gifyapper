@@ -30,11 +30,12 @@ BG_PRESETS = {
 @click.option("--tail-position", default=0.65, type=float, help="Tail position along edge (0.0-1.0)")
 @click.option("--tail-size", default=30, type=int, help="Tail triangle length")
 @click.option("--tail-angle", default=40, type=int, help="Tail width in degrees (wider = fatter)")
+@click.option("--tail-tilt", default=0, type=int, help="Horizontal tilt of tail tip (negative=left, positive=right)")
 @click.option("--no-preview", is_flag=True, help="Skip visual preview, use defaults or --position")
 @click.option("--position", nargs=2, type=int, default=None, help="Bubble position as X Y (use with --no-preview)")
 def main(input_gif, output, bg, pad_top, pad_bottom,
          shape, corner_radius, tail, bubble_width, bubble_height,
-         tail_position, tail_size, tail_angle,
+         tail_position, tail_size, tail_angle, tail_tilt,
          no_preview, position):
     """Add a speech bubble to a GIF."""
     bubble_color = BG_PRESETS.get(bg, bg)
@@ -59,6 +60,7 @@ def main(input_gif, output, bg, pad_top, pad_bottom,
         tail_position=tail_position,
         tail_size=tail_size,
         tail_angle=tail_angle,
+        tail_tilt=tail_tilt,
     )
 
     if no_preview:
@@ -77,6 +79,7 @@ def main(input_gif, output, bg, pad_top, pad_bottom,
         tail_position = result.get("tail_position", tail_position)
         tail_size = result.get("tail_size", tail_size)
         tail_angle = result.get("tail_angle", tail_angle)
+        tail_tilt = result.get("tail_tilt", tail_tilt)
         new_width = result.get("width", bubble.width)
         new_height = result.get("height", bubble.height)
 
@@ -90,6 +93,7 @@ def main(input_gif, output, bg, pad_top, pad_bottom,
             tail_position=tail_position,
             tail_size=tail_size,
             tail_angle=tail_angle,
+            tail_tilt=tail_tilt,
         )
 
     composite_gif(

@@ -29,6 +29,7 @@ def render_bubble(
     tail_position=0.65,
     tail_size=30,
     tail_angle=40,
+    tail_tilt=0,
 ):
     """Render a speech bubble as an RGBA PIL Image.
 
@@ -81,20 +82,22 @@ def render_bubble(
         left_y = edge_y + (-overlap if is_bottom else overlap)
         right_y = left_y
 
+    tilt = tail_tilt * s
+
     if tail_direction == "bottom-right":
-        tip = (cx_pos + ts, edge_y + ts)
+        tip = (cx_pos + ts + tilt, edge_y + ts)
     elif tail_direction == "bottom-left":
-        tip = (cx_pos - ts, edge_y + ts)
+        tip = (cx_pos - ts + tilt, edge_y + ts)
     elif tail_direction == "bottom-center":
-        tip = (cx_pos, edge_y + ts)
+        tip = (cx_pos + tilt, edge_y + ts)
     elif tail_direction == "top-right":
-        tip = (cx_pos + ts, edge_y - ts)
+        tip = (cx_pos + ts + tilt, edge_y - ts)
     elif tail_direction == "top-left":
-        tip = (cx_pos - ts, edge_y - ts)
+        tip = (cx_pos - ts + tilt, edge_y - ts)
     elif tail_direction == "top-center":
-        tip = (cx_pos, edge_y - ts)
+        tip = (cx_pos + tilt, edge_y - ts)
     else:
-        tip = (cx_pos + ts, edge_y + ts)
+        tip = (cx_pos + ts + tilt, edge_y + ts)
 
     draw.polygon(
         [(cx_pos - half_base, left_y), tip, (cx_pos + half_base, right_y)],

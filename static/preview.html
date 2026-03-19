@@ -140,6 +140,13 @@ hr { border: none; border-top: 1px solid #333; margin: 4px 0; }
         <span class="range-val" id="tailAngleVal">40°</span>
       </div>
     </label>
+    <label>
+      Tilt
+      <div class="range-row">
+        <input type="range" id="tailTilt" min="-80" max="80" value="0" step="1">
+        <span class="range-val" id="tailTiltVal">0</span>
+      </div>
+    </label>
     <hr>
     <span class="section-label">Canvas</span>
     <label>
@@ -184,6 +191,7 @@ function getTailPos() { return val('tailPos') / 100; }
 function getTailSize() { return val('tailSize'); }
 function getTailAngle() { return val('tailAngle'); }
 function getCornerRadius() { return val('cornerRadius'); }
+function getTailTilt() { return val('tailTilt'); }
 
 function updateShapeControls() {
   const isBox = getShape() === 'box';
@@ -201,7 +209,7 @@ function redraw() {
   gifImg.style.marginTop = padTop + 'px';
 
   ctx.clearRect(0, 0, cw, ch);
-  drawBubble(ctx, bx, by, bw, bh, getTail(), getShape(), getCornerRadius(), getTailPos(), getTailSize(), getTailAngle());
+  drawBubble(ctx, bx, by, bw, bh, getTail(), getShape(), getCornerRadius(), getTailPos(), getTailSize(), getTailAngle(), getTailTilt());
 }
 
 function ellipseBottomY(ecx, ecy, erx, ery, x) {
@@ -210,7 +218,7 @@ function ellipseBottomY(ecx, ecy, erx, ery, x) {
   return ecy + ery * Math.sqrt(1 - (dx / erx) ** 2);
 }
 
-function drawBubble(ctx, x, y, w, h, tail, shape, cornerRadius, tailPos, tailSize, tailAngle) {
+function drawBubble(ctx, x, y, w, h, tail, shape, cornerRadius, tailPos, tailSize, tailAngle, tailTilt) {
   const tailBase = 2 * tailSize * (tailAngle / 90);
   const halfBase = Math.max(1, tailBase / 2);
 
@@ -263,13 +271,14 @@ function drawBubble(ctx, x, y, w, h, tail, shape, cornerRadius, tailPos, tailSiz
   }
 
   // Tail tip
+  const tilt = tailTilt || 0;
   let tipX, tipY;
-  if (tail === 'bottom-right')  { tipX = cx + tailSize; tipY = edgeY + tailSize; }
-  else if (tail === 'bottom-left')   { tipX = cx - tailSize; tipY = edgeY + tailSize; }
-  else if (tail === 'bottom-center') { tipX = cx;            tipY = edgeY + tailSize; }
-  else if (tail === 'top-right')     { tipX = cx + tailSize; tipY = edgeY - tailSize; }
-  else if (tail === 'top-left')      { tipX = cx - tailSize; tipY = edgeY - tailSize; }
-  else if (tail === 'top-center')    { tipX = cx;            tipY = edgeY - tailSize; }
+  if (tail === 'bottom-right')  { tipX = cx + tailSize + tilt; tipY = edgeY + tailSize; }
+  else if (tail === 'bottom-left')   { tipX = cx - tailSize + tilt; tipY = edgeY + tailSize; }
+  else if (tail === 'bottom-center') { tipX = cx + tilt;            tipY = edgeY + tailSize; }
+  else if (tail === 'top-right')     { tipX = cx + tailSize + tilt; tipY = edgeY - tailSize; }
+  else if (tail === 'top-left')      { tipX = cx - tailSize + tilt; tipY = edgeY - tailSize; }
+  else if (tail === 'top-center')    { tipX = cx + tilt;            tipY = edgeY - tailSize; }
 
   ctx.beginPath();
   ctx.moveTo(cx - halfBase, leftY);
@@ -331,6 +340,7 @@ rangeCtrl('tailPos', 'tailPosVal', v => v + '%');
 rangeCtrl('tailSize', 'tailSizeVal', v => v);
 rangeCtrl('tailAngle', 'tailAngleVal', v => v + '\u00B0');
 rangeCtrl('cornerRadius', 'cornerRadiusVal', v => v);
+rangeCtrl('tailTilt', 'tailTiltVal', v => v);
 
 // Generate
 document.getElementById('generate').addEventListener('click', async () => {
@@ -343,7 +353,7 @@ document.getElementById('generate').addEventListener('click', async () => {
     x: Math.round(bx), y: Math.round(by), width: bw, height: bh,
     tail_direction: getTail(), pad_top: getPadTop(),
     shape: getShape(), corner_radius: getCornerRadius(),
-    tail_position: getTailPos(), tail_size: getTailSize(), tail_angle: getTailAngle(),
+    tail_position: getTailPos(), tail_size: getTailSize(), tail_angle: getTailAngle(), tail_tilt: getTailTilt(),
   };
 
   try {
