@@ -1,0 +1,19 @@
+[project]
+name = "gifyapper"
+version = "0.1.0"
+description = "Add speech bubbles to GIFs"
+requires-python = ">=3.10"
+dependencies = [
+    "pillow",
+    "click",
+]
+
+[project.scripts]
+gifyapper = "gifyapper.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.backends"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/gifyapper"]

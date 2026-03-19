@@ -66,7 +66,7 @@ def main(input_gif, output, bg, pad_top, pad_bottom,
     if no_preview:
         bx, by = position if position else ((gif_w - bubble.width) // 2, -(bubble.height // 2))
     else:
-        static_dir = Path(__file__).resolve().parent.parent.parent / "static"
+        static_dir = Path(__file__).resolve().parent / "static"
 
         result = run_preview(input_gif, gif_w, gif_h, bubble.width, bubble.height, bubble_color, static_dir)
 
