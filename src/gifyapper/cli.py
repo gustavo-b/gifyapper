@@ -74,6 +74,7 @@ def main(input_gif, output, bg, pad_top, pad_bottom,
         bx = result["x"]
         by = result["y"]
         pad_top = result.get("pad_top", pad_top)
+        bubble_color = result.get("bg_color", bubble_color)
         tail = result.get("tail_direction", tail)
         shape = result.get("shape", shape)
         corner_radius = result.get("corner_radius", corner_radius)

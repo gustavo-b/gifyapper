@@ -82,6 +82,21 @@ hr { border: none; border-top: 1px solid #333; margin: 4px 0; }
   <div class="controls">
     <span class="section-label">Bubble</span>
     <label>
+      Color
+      <div style="display:flex;gap:6px;align-items:center">
+        <select id="bgPreset" style="flex:1">
+          <option value="discord">Discord</option>
+          <option value="telegram">Telegram</option>
+          <option value="twitter">Twitter</option>
+          <option value="github">GitHub</option>
+          <option value="black">Black</option>
+          <option value="white">White</option>
+          <option value="custom">Custom</option>
+        </select>
+        <input type="color" id="bgCustom" value="#323339" style="width:36px;height:30px;padding:0;border:1px solid #444;border-radius:4px;background:none;cursor:pointer">
+      </div>
+    </label>
+    <label>
       Shape
       <select id="shape">
         <option value="circle">Circle</option>
@@ -167,6 +182,10 @@ const gifImg = document.getElementById('gifImg');
 const canvasWrap = document.getElementById('canvasWrap');
 let data = null;
 let bgColor = '#323339';
+const BG_PRESETS = {
+  discord: '#323339', telegram: '#17212B', twitter: '#15202B',
+  github: '#0D1117', black: '#000000', white: '#FFFFFF',
+};
 
 let bx = 10, by = 10, bw = 200, bh = 80;
 let dragging = false, dragOx = 0, dragOy = 0;
@@ -175,6 +194,13 @@ async function init() {
   const resp = await fetch('/api/data');
   data = await resp.json();
   bgColor = data.bg_color || '#323339';
+  const presetEntry = Object.entries(BG_PRESETS).find(([, v]) => v.toLowerCase() === bgColor.toLowerCase());
+  if (presetEntry) {
+    document.getElementById('bgPreset').value = presetEntry[0];
+  } else {
+    document.getElementById('bgPreset').value = 'custom';
+  }
+  document.getElementById('bgCustom').value = bgColor;
   bw = data.gif_width + 20;
   bh = data.bubble_height;
   document.getElementById('bubbleWidth').value = bw;
@@ -309,6 +335,19 @@ canvas.addEventListener('mouseup', () => { dragging = false; canvas.style.cursor
 canvas.addEventListener('mouseleave', () => { dragging = false; canvas.style.cursor = 'default'; });
 
 // Controls
+document.getElementById('bgPreset').addEventListener('change', () => {
+  const preset = document.getElementById('bgPreset').value;
+  if (preset !== 'custom') {
+    bgColor = BG_PRESETS[preset];
+    document.getElementById('bgCustom').value = bgColor;
+  }
+  redraw();
+});
+document.getElementById('bgCustom').addEventListener('input', () => {
+  bgColor = document.getElementById('bgCustom').value;
+  document.getElementById('bgPreset').value = 'custom';
+  redraw();
+});
 document.getElementById('padTop').addEventListener('input', redraw);
 document.getElementById('tail').addEventListener('change', redraw);
 document.getElementById('shape').addEventListener('change', () => { updateShapeControls(); redraw(); });
@@ -359,6 +398,7 @@ document.getElementById('generate').addEventListener('click', async () => {
     tail_direction: getTail(), pad_top: getPadTop(),
     shape: getShape(), corner_radius: getCornerRadius(),
     tail_position: getTailPos(), tail_size: getTailSize(), tail_angle: getTailAngle(), tail_tilt: getTailTilt(),
+    bg_color: bgColor,
   };
 
   try {
