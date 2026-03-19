@@ -2,6 +2,9 @@
 
 Add speech bubbles to GIFs. Includes a browser-based preview for visual positioning.
 
+![milly](https://github.com/user-attachments/assets/a476f3d1-878b-4466-99e5-0016b05913c1)
+
+
 ## Setup
 
 ### Nix
