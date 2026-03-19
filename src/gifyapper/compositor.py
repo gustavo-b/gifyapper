@@ -23,19 +23,28 @@ def composite_gif(
             "-coalesce",
         ]
 
-        if pad_top > 0 or pad_bottom > 0:
-            if pad_top > 0:
-                cmd += [
-                    "-gravity", "north",
-                    "-background", bg_color,
-                    "-splice", f"0x{pad_top}",
-                ]
-            if pad_bottom > 0:
-                cmd += [
-                    "-gravity", "south",
-                    "-background", bg_color,
-                    "-splice", f"0x{pad_bottom}",
-                ]
+        if pad_top > 0:
+            cmd += [
+                "-gravity", "north",
+                "-background", bg_color,
+                "-splice", f"0x{pad_top}",
+            ]
+        elif pad_top < 0:
+            cmd += [
+                "-gravity", "north",
+                "-chop", f"0x{-pad_top}",
+            ]
+        if pad_bottom > 0:
+            cmd += [
+                "-gravity", "south",
+                "-background", bg_color,
+                "-splice", f"0x{pad_bottom}",
+            ]
+        elif pad_bottom < 0:
+            cmd += [
+                "-gravity", "south",
+                "-chop", f"0x{-pad_bottom}",
+            ]
 
         # Composite bubble onto each frame
         geo_x = f"+{bubble_x}" if bubble_x >= 0 else str(bubble_x)

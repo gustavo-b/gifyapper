@@ -103,6 +103,7 @@ hr { border: none; border-top: 1px solid #333; margin: 4px 0; }
       Bubble Height
       <input type="number" id="bubbleHeight" value="80" min="20" max="400" step="10">
     </label>
+    <button type="button" id="centerBtn" style="background:#0f3460;color:#e0e0e0;border:1px solid #444;border-radius:6px;padding:8px 14px;font-size:0.9em;cursor:pointer">Center</button>
     <hr>
     <span class="section-label">Tail</span>
     <label>
@@ -151,7 +152,7 @@ hr { border: none; border-top: 1px solid #333; margin: 4px 0; }
     <span class="section-label">Canvas</span>
     <label>
       Pad Top (px)
-      <input type="number" id="padTop" value="0" min="0" max="400" step="10">
+      <input type="number" id="padTop" value="0" min="-400" max="400" step="10">
     </label>
     <button id="generate">Generate GIF</button>
     <div class="hint">Drag the bubble to reposition.</div>
@@ -317,6 +318,10 @@ document.getElementById('bubbleWidth').addEventListener('input', () => {
 });
 document.getElementById('bubbleHeight').addEventListener('input', () => {
   bh = parseInt(document.getElementById('bubbleHeight').value) || 80;
+  redraw();
+});
+document.getElementById('centerBtn').addEventListener('click', () => {
+  bx = Math.floor((data.gif_width - bw) / 2);
   redraw();
 });
 document.getElementById('flipTail').addEventListener('click', () => {
