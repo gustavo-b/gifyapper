@@ -75,8 +75,9 @@ hr { border: none; border-top: 1px solid #333; margin: 4px 0; }
 <body>
 <h1>GifYapper</h1>
 <div class="container">
-  <div class="canvas-wrap">
-    <canvas id="canvas"></canvas>
+  <div class="canvas-wrap" id="canvasWrap">
+    <img id="gifImg" src="/api/gif" style="display:block">
+    <canvas id="canvas" style="position:absolute;top:0;left:0"></canvas>
   </div>
   <div class="controls">
     <span class="section-label">Bubble</span>
@@ -154,8 +155,9 @@ hr { border: none; border-top: 1px solid #333; margin: 4px 0; }
 <script>
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
+const gifImg = document.getElementById('gifImg');
+const canvasWrap = document.getElementById('canvasWrap');
 let data = null;
-let frameImg = null;
 let bgColor = '#323339';
 
 let bx = 10, by = 10, bw = 200, bh = 80;
@@ -165,17 +167,13 @@ async function init() {
   const resp = await fetch('/api/data');
   data = await resp.json();
   bgColor = data.bg_color || '#323339';
-  frameImg = new Image();
-  frameImg.onload = () => {
-    bw = data.bubble_width;
-    bh = data.bubble_height;
-    document.getElementById('bubbleWidth').value = bw;
-    bx = Math.max(0, Math.floor((data.gif_width - bw) / 2));
-    by = 10;
-    redraw();
-  };
-  frameImg.src = data.frame;
-  // bgColor is used for the bubble fill, not the page
+  bw = data.gif_width + 20;
+  bh = data.bubble_height;
+  document.getElementById('bubbleWidth').value = bw;
+  document.getElementById('bubbleHeight').value = bh;
+  bx = Math.floor((data.gif_width - bw) / 2);
+  by = -(bh / 2);
+  redraw();
 }
 
 function val(id) { return parseInt(document.getElementById(id).value) || 0; }
@@ -198,10 +196,11 @@ function redraw() {
   const ch = data.gif_height + padTop;
   canvas.width = cw;
   canvas.height = ch;
+  canvasWrap.style.width = cw + 'px';
+  canvasWrap.style.height = ch + 'px';
+  gifImg.style.marginTop = padTop + 'px';
 
-  ctx.fillStyle = '#1a1a2e';
-  ctx.fillRect(0, 0, cw, ch);
-  ctx.drawImage(frameImg, 0, padTop);
+  ctx.clearRect(0, 0, cw, ch);
   drawBubble(ctx, bx, by, bw, bh, getTail(), getShape(), getCornerRadius(), getTailPos(), getTailSize(), getTailAngle());
 }
 

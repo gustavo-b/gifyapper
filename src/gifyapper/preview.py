@@ -1,19 +1,9 @@
-import base64
-import io
 import json
 import threading
 import webbrowser
 from functools import partial
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
-
-from PIL import Image
-
-
-def _img_to_base64(img):
-    buf = io.BytesIO()
-    img.save(buf, format="PNG")
-    return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode()
 
 
 class _PreviewHandler(SimpleHTTPRequestHandler):
@@ -40,7 +30,6 @@ class _PreviewHandler(SimpleHTTPRequestHandler):
             self.wfile.write(content)
         elif self.path == "/api/data":
             payload = {
-                "frame": self.api_data["frame_b64"],
                 "gif_width": self.api_data["gif_width"],
                 "gif_height": self.api_data["gif_height"],
                 "bubble_width": self.api_data["bubble_width"],
@@ -54,6 +43,14 @@ class _PreviewHandler(SimpleHTTPRequestHandler):
             self._no_cache()
             self.end_headers()
             self.wfile.write(body)
+        elif self.path == "/api/gif":
+            gif_path = Path(self.api_data["gif_path"])
+            content = gif_path.read_bytes()
+            self.send_response(200)
+            self.send_header("Content-Type", "image/gif")
+            self.send_header("Content-Length", len(content))
+            self.end_headers()
+            self.wfile.write(content)
         else:
             self.send_error(404)
 
@@ -76,7 +73,7 @@ class _PreviewHandler(SimpleHTTPRequestHandler):
         pass  # Suppress request logs
 
 
-def run_preview(frame_img, bubble_width, bubble_height, bg_color, static_dir):
+def run_preview(gif_path, gif_width, gif_height, bubble_width, bubble_height, bg_color, static_dir):
     """Start a local preview server, open browser, wait for user to position bubble.
 
     Returns dict with keys: x, y, width, height, tail_direction, pad_top, shape, etc.
@@ -85,9 +82,9 @@ def run_preview(frame_img, bubble_width, bubble_height, bg_color, static_dir):
     result_store = {}
 
     api_data = {
-        "frame_b64": _img_to_base64(frame_img),
-        "gif_width": frame_img.width,
-        "gif_height": frame_img.height,
+        "gif_path": str(gif_path),
+        "gif_width": gif_width,
+        "gif_height": gif_height,
         "bubble_width": bubble_width,
         "bubble_height": bubble_height,
         "bg_color": bg_color,

@@ -47,7 +47,7 @@ def main(input_gif, output, bg, pad_top, pad_bottom,
     gif_w, gif_h = gif.size
 
     if bubble_width is None:
-        bubble_width = int(gif_w * 0.6)
+        bubble_width = gif_w + 20
 
     bubble = render_bubble(
         width=bubble_width,
@@ -62,13 +62,11 @@ def main(input_gif, output, bg, pad_top, pad_bottom,
     )
 
     if no_preview:
-        bx, by = position if position else (max(0, (gif_w - bubble.width) // 2), 10)
+        bx, by = position if position else ((gif_w - bubble.width) // 2, -(bubble.height // 2))
     else:
-        gif.seek(0)
-        first_frame = gif.convert("RGBA")
         static_dir = Path(__file__).resolve().parent.parent.parent / "static"
 
-        result = run_preview(first_frame, bubble.width, bubble.height, bubble_color, static_dir)
+        result = run_preview(input_gif, gif_w, gif_h, bubble.width, bubble.height, bubble_color, static_dir)
 
         bx = result["x"]
         by = result["y"]

@@ -38,11 +38,14 @@ def composite_gif(
                 ]
 
         # Composite bubble onto each frame
+        geo_x = f"+{bubble_x}" if bubble_x >= 0 else str(bubble_x)
+        geo_y = f"+{bubble_y}" if bubble_y >= 0 else str(bubble_y)
+
         cmd += [
             "null:",
             str(bubble_path),
             "-gravity", "northwest",
-            "-geometry", f"+{bubble_x}+{bubble_y}",
+            "-geometry", f"{geo_x}{geo_y}",
             "-layers", "Composite",
             str(output_path),
         ]
