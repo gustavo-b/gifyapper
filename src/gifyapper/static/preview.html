@@ -25,8 +25,6 @@ h1 { font-size: 1.4em; margin-bottom: 16px; color: #fff; }
 }
 .canvas-wrap {
   position: relative;
-  border: 2px solid #333;
-  border-radius: 8px;
   overflow: hidden;
   cursor: default;
 }
@@ -85,6 +83,7 @@ hr { border: none; border-top: 1px solid #333; margin: 4px 0; }
       Color
       <div style="display:flex;gap:6px;align-items:center">
         <select id="bgPreset" style="flex:1">
+          <option value="transparent">Transparent</option>
           <option value="discord">Discord</option>
           <option value="telegram">Telegram</option>
           <option value="twitter">Twitter</option>
@@ -185,6 +184,7 @@ let bgColor = '#323339';
 const BG_PRESETS = {
   discord: '#323339', telegram: '#17212B', twitter: '#15202B',
   github: '#0D1117', black: '#000000', white: '#FFFFFF',
+  transparent: 'transparent',
 };
 
 let bx = 10, by = 10, bw = 200, bh = 80;
@@ -249,13 +249,12 @@ function drawBubble(ctx, x, y, w, h, tail, shape, cornerRadius, tailPos, tailSiz
   const tailBase = 2 * tailSize * (tailAngle / 90);
   const halfBase = Math.max(1, tailBase / 2);
 
-  ctx.fillStyle = bgColor;
+  const isTransparent = bgColor === 'transparent';
 
   // Body
   if (shape === 'circle') {
     ctx.beginPath();
     ctx.ellipse(x + w/2, y + h/2, w/2, h/2, 0, 0, Math.PI * 2);
-    ctx.fill();
   } else {
     const r = Math.min(cornerRadius, w/2, h/2);
     ctx.beginPath();
@@ -269,8 +268,9 @@ function drawBubble(ctx, x, y, w, h, tail, shape, cornerRadius, tailPos, tailSiz
     ctx.lineTo(x, y + r);
     ctx.quadraticCurveTo(x, y, x + r, y);
     ctx.closePath();
-    ctx.fill();
   }
+  ctx.fillStyle = isTransparent ? '#1a1a2e' : bgColor;
+  ctx.fill();
 
   // Tail attachment
   let cx = x + w * tailPos;
@@ -312,6 +312,7 @@ function drawBubble(ctx, x, y, w, h, tail, shape, cornerRadius, tailPos, tailSiz
   ctx.lineTo(tipX, tipY);
   ctx.lineTo(cx + halfBase, rightY);
   ctx.closePath();
+  ctx.fillStyle = isTransparent ? '#1a1a2e' : bgColor;
   ctx.fill();
 }
 
@@ -339,8 +340,9 @@ document.getElementById('bgPreset').addEventListener('change', () => {
   const preset = document.getElementById('bgPreset').value;
   if (preset !== 'custom') {
     bgColor = BG_PRESETS[preset];
-    document.getElementById('bgCustom').value = bgColor;
+    if (preset !== 'transparent') document.getElementById('bgCustom').value = bgColor;
   }
+  document.getElementById('bgCustom').style.display = preset === 'transparent' ? 'none' : '';
   redraw();
 });
 document.getElementById('bgCustom').addEventListener('input', () => {

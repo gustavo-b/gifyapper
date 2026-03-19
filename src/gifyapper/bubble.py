@@ -48,14 +48,17 @@ def render_bubble(
     bubble_y_off = 0 if is_bottom else ts
     img_h = bh + ts
 
+    transparent = bubble_color == "transparent"
+    fill_color = "#FFFFFF" if transparent else bubble_color
+
     img = Image.new("RGBA", (bw, img_h), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
 
     body_rect = [0, bubble_y_off, bw - 1, bubble_y_off + bh - 1]
     if shape == "circle":
-        draw.ellipse(body_rect, fill=bubble_color)
+        draw.ellipse(body_rect, fill=fill_color)
     else:
-        draw.rounded_rectangle(body_rect, radius=cr, fill=bubble_color)
+        draw.rounded_rectangle(body_rect, radius=cr, fill=fill_color)
 
     cx_pos = int(bw * tail_position)
     cx_pos = max(half_base, min(bw - half_base, cx_pos))
@@ -101,7 +104,7 @@ def render_bubble(
 
     draw.polygon(
         [(cx_pos - half_base, left_y), tip, (cx_pos + half_base, right_y)],
-        fill=bubble_color,
+        fill=fill_color,
     )
 
     # Downscale with high-quality resampling for smooth edges

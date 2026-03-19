@@ -14,13 +14,14 @@ BG_PRESETS = {
     "black": "#000000",
     "white": "#FFFFFF",
     "github": "#0D1117",
+    "transparent": "transparent",
 }
 
 
 @click.command()
 @click.argument("input_gif", type=click.Path(exists=True))
 @click.option("-o", "--output", default=None, help="Output GIF path (default: input_yap.gif)")
-@click.option("--bg", default="discord", help="Bubble color preset or hex (discord, telegram, twitter, black, white, or #RRGGBB)")
+@click.option("--bg", default="transparent", help="Bubble color preset or hex (transparent, discord, telegram, twitter, github, black, white, or #RRGGBB)")
 @click.option("--pad-top", default=0, type=int, help="Pixels to add/crop above the GIF (negative to crop)")
 @click.option("--pad-bottom", default=0, type=int, help="Pixels to add/crop below the GIF (negative to crop)")
 @click.option("--shape", default="circle", type=click.Choice(["circle", "box"]), help="Bubble shape")

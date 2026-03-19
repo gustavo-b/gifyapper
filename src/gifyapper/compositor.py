@@ -21,12 +21,14 @@ def composite_gif(
         cmd = [
             "magick", str(input_path),
             "-coalesce",
+            "-alpha", "set",
         ]
 
+        pad_bg = "none" if bg_color == "transparent" else bg_color
         if pad_top > 0:
             cmd += [
                 "-gravity", "north",
-                "-background", bg_color,
+                "-background", pad_bg,
                 "-splice", f"0x{pad_top}",
             ]
         elif pad_top < 0:
@@ -37,7 +39,7 @@ def composite_gif(
         if pad_bottom > 0:
             cmd += [
                 "-gravity", "south",
-                "-background", bg_color,
+                "-background", pad_bg,
                 "-splice", f"0x{pad_bottom}",
             ]
         elif pad_bottom < 0:
@@ -50,13 +52,21 @@ def composite_gif(
         geo_x = f"+{bubble_x}" if bubble_x >= 0 else str(bubble_x)
         geo_y = f"+{bubble_y}" if bubble_y >= 0 else str(bubble_y)
 
-        cmd += [
+        composite_args = [
             "null:",
             str(bubble_path),
             "-gravity", "northwest",
             "-geometry", f"{geo_x}{geo_y}",
-            "-layers", "Composite",
-            str(output_path),
         ]
+
+        if bg_color == "transparent":
+            composite_args += ["-compose", "DstOut"]
+
+        cmd += composite_args + ["-layers", "Composite"]
+
+        if bg_color == "transparent":
+            cmd += ["-dispose", "Background"]
+
+        cmd.append(str(output_path))
 
         subprocess.run(cmd, check=True)
